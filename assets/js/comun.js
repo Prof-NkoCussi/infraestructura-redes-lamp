@@ -335,8 +335,8 @@ function armarGlobo() {
       if (evento.newState === 'closed') alCerrarGlobo();
     });
   } else {
-    // Navegadores viejos sin popover: lo mostramos fijo en el medio y se cierra con Esc.
-    Object.assign(globo.style, { position: 'fixed', inset: '0', height: 'fit-content', zIndex: '200' });
+    // Navegadores viejos sin popover: va fijo junto a la palabra (ubicarGlobo) y se cierra con Esc.
+    Object.assign(globo.style, { position: 'fixed', zIndex: '200' });
     document.addEventListener('keydown', (evento) => {
       if (evento.key === 'Escape' && !globo.hidden) cerrarGlobo();
     });
@@ -361,8 +361,39 @@ function abrirTermino(boton) {
   } else {
     globo.hidden = false;
   }
+  ubicarGlobo();
+  addEventListener('scroll', ubicarGlobo, { passive: true });
+  addEventListener('resize', ubicarGlobo);
   boton.setAttribute('aria-expanded', 'true');
-  $('button', globo).focus();
+  $('button', globo).focus({ preventScroll: true });
+}
+
+/**
+ * Pone el globo pegado a la palabra que lo abrió: abajo si entra, si no arriba,
+ * sin taparla y sin salirse de la pantalla.
+ */
+function ubicarGlobo() {
+  if (!globo || !disparador) return;
+  const palabra = disparador.getBoundingClientRect();
+  const margen = 16;
+  const separacion = 8;
+  const ancho = globo.offsetWidth;
+  const alto = globo.offsetHeight;
+
+  const izquierda = Math.min(Math.max(margen, palabra.left), innerWidth - ancho - margen);
+  let arriba = palabra.bottom + separacion;
+  if (arriba + alto > innerHeight - margen && palabra.top - separacion - alto >= margen) {
+    arriba = palabra.top - separacion - alto;
+  }
+  arriba = Math.max(margen, Math.min(arriba, innerHeight - alto - margen));
+
+  Object.assign(globo.style, {
+    position: 'fixed',
+    inset: 'auto',
+    margin: '0',
+    left: `${Math.max(margen, izquierda)}px`,
+    top: `${arriba}px`,
+  });
 }
 
 function cerrarGlobo() {
@@ -376,6 +407,8 @@ function cerrarGlobo() {
 }
 
 function alCerrarGlobo() {
+  removeEventListener('scroll', ubicarGlobo);
+  removeEventListener('resize', ubicarGlobo);
   if (!disparador) return;
   const focoAdentro = globo.contains(document.activeElement);
   disparador.setAttribute('aria-expanded', 'false');

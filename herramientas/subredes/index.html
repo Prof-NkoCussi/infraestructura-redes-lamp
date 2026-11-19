@@ -4,109 +4,164 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Calculadora de subredes</title>
-  <meta name="description" content="Escribí una dirección IP y entendé tu red en palabras simples: qué direcciones podés usar, cuántos equipos entran y cómo dividirla.">
-  <meta name="theme-color" content="#f5f6fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0e1120" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Escribí la IP de un equipo y entendé la red en palabras simples: qué direcciones podés usar, cuáles no y cuántos equipos entran.">
+  <meta name="theme-color" content="#7c3aed" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#6d28d9" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../../assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../../assets/fonts/barlow-500-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../../assets/fonts/barlow-semi-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="../../assets/css/base.css">
   <script>try{const t=JSON.parse(localStorage.getItem('redes-lamp:tema'));if(t)document.documentElement.dataset.tema=t}catch{}</script>
   <script type="module" src="ui.js"></script>
   <style>
-    /* ───────── Formulario ───────── */
+    :root {
+      --c-asfalto: #34343a;
+    }
 
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-tema="claro"]) { --c-asfalto: #46464e; }
+    }
+
+    :root[data-tema="oscuro"] { --c-asfalto: #46464e; }
+
+    /*
+     * Herramienta. En el celular: datos (con los ejemplos en una fila) y enseguida
+     * el resultado, así el deslizador y la placa quedan cerca. En PC: lado a lado.
+     */
+    .herramienta {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--e-6);
+      align-items: start;
+    }
+
+    /* minmax(0, 1fr): que la fila deslizable de ejemplos no estire el formulario */
     .calculadora {
       display: grid;
-      gap: var(--e-5);
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--e-4);
+    }
+
+    .ejemplos {
+      min-width: 0;
+    }
+
+    @media (min-width: 40rem) {
+      .calculadora {
+        gap: var(--e-5);
+      }
     }
 
     .etiqueta-con-ayuda {
-      --espacio: var(--e-1) var(--e-3);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
       justify-content: space-between;
+      gap: var(--e-1) var(--e-3);
     }
 
     .etiqueta-con-ayuda label {
       font-weight: 600;
+      color: var(--c-tinta);
     }
 
     .etiqueta-con-ayuda .termino {
-      font-size: var(--t-chico);
-      color: var(--c-primario);
+      font-size: var(--t-2);
+      color: var(--c-azul);
     }
 
     .control-tamanio {
       display: grid;
       grid-template-columns: var(--toque) 1fr var(--toque);
       align-items: center;
-      gap: var(--e-2);
-    }
-
-    .control-tamanio input[type="range"] {
-      width: 100%;
-      height: var(--toque);
-      margin: 0;
-      accent-color: var(--c-primario);
-      background: transparent;
-      cursor: pointer;
+      gap: var(--e-3);
     }
 
     .tamanio-extremos {
       display: flex;
       justify-content: space-between;
-      padding-inline: calc(var(--toque) + var(--e-2));
-      font-size: var(--t-chico);
-      color: var(--c-texto-suave);
+      padding-inline: calc(var(--toque) + var(--e-3));
+      font-size: var(--t-1);
+      color: var(--c-suave);
     }
 
-    .tamanio-valor {
+    .lectura {
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
       gap: var(--e-1) var(--e-3);
     }
 
-    .tamanio-valor strong {
-      font-family: var(--f-mono);
-      font-size: var(--t-grande);
+    .lectura__prefijo {
+      font-family: var(--f-titulo);
+      font-size: var(--t-5);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--c-tinta);
+      font-variant-numeric: tabular-nums;
     }
 
-    .ejemplos > p {
+    .lectura__mascara {
+      font-weight: 600;
+      color: var(--c-tinta);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .lectura__equipos {
+      color: var(--c-suave);
+    }
+
+    .ejemplos > .etiqueta {
       margin-bottom: var(--e-2);
     }
 
-    /* En el celular, los ejemplos van como lista: nombre a la izquierda, IP a la derecha */
-    #ejemplos {
-      display: grid;
-    }
-
-    #ejemplos .chip {
-      width: 100%;
-      border-radius: var(--r-medio);
-      text-align: start;
-    }
-
-    #ejemplos .chip__detalle {
-      margin-inline-start: auto;
-    }
-
-    @media (min-width: 40rem) {
-      #ejemplos {
+    /* En el celular y la tablet, los ejemplos son una sola fila que se desliza de costado */
+    @media (max-width: 63.99rem) {
+      .ejemplos .opciones {
         display: flex;
+        gap: var(--e-2);
+        overflow-x: auto;
+        padding: 3px 3px var(--e-2);
+        scroll-snap-type: x proximity;
+        scrollbar-width: thin;
       }
 
-      #ejemplos .chip {
+      .ejemplos .opcion {
+        flex: none;
         width: auto;
-        border-radius: var(--r-pildora);
+        white-space: nowrap;
+        scroll-snap-align: start;
       }
     }
 
-    fieldset.segmentado {
-      margin: 0;
-      min-inline-size: 0;
+    .portada .bajada {
+      max-width: 52ch;
+    }
+
+    @media (max-width: 39.99rem) {
+      .portada {
+        padding-block: var(--e-5) var(--e-4);
+      }
+
+      .portada .bajada {
+        font-size: var(--t-3);
+      }
+
+      .herramienta,
+      .resultado {
+        gap: var(--e-4);
+      }
     }
 
     /* ───────── Resultado ───────── */
 
-    .resultado-encabezado {
+    .resultado {
+      display: grid;
+      gap: var(--e-5);
+      scroll-margin-top: var(--e-4);
+    }
+
+    .resultado__cabecera {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -114,177 +169,228 @@
       gap: var(--e-3);
     }
 
-    .resultado-vacio {
-      padding: var(--e-6) var(--e-4);
-      border: 2px dashed var(--c-borde);
-      border-radius: var(--r-grande);
-      color: var(--c-texto-suave);
-      text-align: center;
+    .resultado-vacio > * + * {
+      margin-top: var(--e-2);
     }
 
-    .resultado-vacio__icono {
-      font-size: 2.5rem;
-      line-height: 1;
+    /* Con un dato inválido, el último resultado queda a la vista y sellado */
+    .sello {
+      display: none;
+      justify-self: start;
     }
 
-    /* Respuestas grandes del modo simple */
-    .respuestas {
+    .sello svg {
+      flex: none;
+      width: 1rem;
+      height: 1rem;
+      --senal-fondo: var(--c-amarillo);
+      color: #000;
+    }
+
+    .resultado[data-estado="desactualizado"] .sello {
+      display: inline-flex;
+    }
+
+    .resultado[data-estado="desactualizado"] #resultado-contenido {
+      opacity: 0.5;
+    }
+
+    #resultado-contenido {
+      transition: opacity 200ms var(--curva);
+    }
+
+    /* ───────── El tramo de ruta, con sus mojones ───────── */
+
+    .tramo {
       display: grid;
       gap: var(--e-3);
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
     }
 
-    .respuesta {
-      display: flex;
-      flex-direction: column;
-      gap: var(--e-1);
-      padding: var(--e-4);
-      border: 1px solid var(--c-borde);
-      border-radius: var(--r-grande);
-      background: var(--c-superficie);
-    }
-
-    .respuesta__icono {
-      font-size: 1.75rem;
-      line-height: 1;
-    }
-
-    .respuesta__valor {
-      font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2rem);
-      font-weight: 800;
-      line-height: 1.15;
-      overflow-wrap: anywhere;
-    }
-
-    .respuesta__valor.mono {
-      font-size: clamp(1.125rem, 1rem + 1vw, 1.5rem);
-    }
-
-    .respuesta__texto {
-      font-size: var(--t-chico);
-      color: var(--c-texto-suave);
-    }
-
-    /* La "calle" de direcciones: nombre de la red | equipos | aviso a todos */
-    .rango {
-      --posicion: 50%;
+    /* Arriba de la ruta: el poste de tu IP y los mojones de los equipos. Abajo: los de las barreras. */
+    .tramo__mapa {
       position: relative;
-      padding-top: 2.25rem;
+      padding-block: 3.75rem 2.25rem;
     }
 
-    .rango__barra {
+    .tramo__ruta {
       display: flex;
-      height: 3rem;
+      height: 2.75rem;
       overflow: hidden;
-      border: 1px solid var(--c-borde);
-      border-radius: var(--r-medio);
+      border-radius: var(--r-control);
+      background: var(--c-asfalto);
     }
 
-    .rango__red,
-    .rango__broadcast {
-      flex: 0 0 2.75rem;
-      display: grid;
-      place-items: center;
-      font-size: 1.125rem;
+    /* Los extremos que no se usan, como la barrera de fin de camino */
+    .tramo__fin {
+      flex: 0 0 2.25rem;
+      background: repeating-linear-gradient(135deg, #c8102e 0 0.375rem, #fff 0.375rem 0.75rem);
     }
 
-    .rango__red {
-      background: color-mix(in srgb, var(--c-atencion) 22%, var(--c-superficie));
-    }
-
-    .rango__broadcast {
-      background: color-mix(in srgb, var(--c-error) 18%, var(--c-superficie));
-    }
-
-    .rango__hosts {
+    .tramo__carril {
+      position: relative;
       flex: 1;
       display: grid;
       place-items: center;
-      padding-inline: var(--e-2);
-      font-size: var(--t-chico);
-      font-weight: 600;
-      text-align: center;
-      background: repeating-linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--c-primario) 14%, var(--c-superficie)) 0 0.75rem,
-        color-mix(in srgb, var(--c-primario) 24%, var(--c-superficie)) 0.75rem 0.875rem
-      );
     }
 
-    .rango__marca {
+    .tramo__carril::before {
+      content: "";
       position: absolute;
-      top: 0;
-      left: clamp(1.75rem, var(--posicion), calc(100% - 1.75rem));
+      inset-inline: var(--e-3);
+      top: 50%;
+      height: 2px;
+      margin-top: -1px;
+      background: repeating-linear-gradient(90deg, #fff 0 1rem, transparent 1rem 1.75rem);
+      opacity: 0.8;
+    }
+
+    /* La cantidad de equipos, pintada sobre el asfalto */
+    .tramo__pintura {
+      position: relative;
+      padding: 0 var(--e-2);
+      font-family: var(--f-titulo);
+      font-size: var(--t-3);
+      font-weight: 700;
+      line-height: 1.6;
+      letter-spacing: 0.02em;
+      color: #fff;
+      background: var(--c-asfalto);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /*
+     * Mojones: una plaquita con su número en la cara, sobre un palo corto.
+     * El palo queda justo en la dirección; la placa se corre hacia adentro en las puntas.
+     */
+    .poste {
+      position: absolute;
       display: flex;
       flex-direction: column;
       align-items: center;
       transform: translateX(-50%);
-      font-size: var(--t-chico);
-      font-weight: 700;
-      color: var(--c-primario);
       white-space: nowrap;
       pointer-events: none;
-      transition: left 300ms ease;
     }
 
-    .rango__marca::after {
-      content: "";
-      width: 0;
-      height: 0;
-      border: 0.4rem solid transparent;
-      border-top-color: currentColor;
-      border-bottom-width: 0;
+    .poste__cifra {
+      min-width: 1.5rem;
+      padding: 0.0625rem 0.3125rem;
+      border: 2px solid #000;
+      border-radius: var(--r-marca);
+      font-size: var(--t-1);
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      color: #000;
+      background: #fff;
+      font-variant-numeric: tabular-nums;
     }
 
-    .rango__leyenda {
-      display: grid;
-      gap: var(--e-2);
-      margin: var(--e-3) 0 0;
+    .poste__palo {
+      width: 3px;
+      background: var(--c-tinta);
+    }
+
+    .poste--inicio {
+      align-items: flex-start;
+      transform: translateX(-0.75rem);
+    }
+
+    .poste--fin {
+      align-items: flex-end;
+      transform: translateX(calc(-100% + 0.75rem));
+    }
+
+    .poste--inicio .poste__palo { margin-inline-start: calc(0.75rem - 1.5px); }
+    .poste--fin .poste__palo { margin-inline-end: calc(0.75rem - 1.5px); }
+
+    /* Mojones de los equipos: placas blancas, paradas sobre la ruta */
+    .poste--equipo {
+      bottom: calc(100% - 3.75rem);
+    }
+
+    .poste--equipo .poste__palo {
+      height: 0.5rem;
+    }
+
+    /* Mojones de lo que no se usa: placas rojas, colgadas debajo de las barreras */
+    .poste--no {
+      top: calc(3.75rem + 2.75rem);
+    }
+
+    .poste--no .poste__palo {
+      order: -1;
+      height: 0.375rem;
+      background: var(--c-rojo-marca);
+    }
+
+    .poste--no .poste__cifra {
+      border-color: #8f0b21;
+      color: #fff;
+      background: #c8102e;
+    }
+
+    /* Tu IP: la placa violeta, más alta que las demás */
+    .poste--vos {
+      top: 0;
+      bottom: calc(100% - 3.75rem);
+      transition: left 320ms var(--curva);
+    }
+
+    .poste--vos .poste__cifra {
+      padding-inline: var(--e-2);
+      border-color: var(--c-marca);
+      font-size: var(--t-2);
+      color: var(--c-sobre-marca);
+      background: var(--c-marca);
+    }
+
+    .poste--vos .poste__palo {
+      flex: 1;
+      background: var(--c-marca);
+    }
+
+    /* La leyenda solo explica los colores; las direcciones están en la placa y en los postes */
+    .tramo__leyenda {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--e-2) var(--e-5);
+      margin: 0;
       padding: 0;
       list-style: none;
-      font-size: var(--t-chico);
+      font-size: var(--t-2);
     }
 
-    .rango__leyenda li {
+    .tramo__leyenda li {
       display: flex;
-      align-items: flex-start;
+      align-items: baseline;
       gap: var(--e-2);
     }
 
     .muestra {
       flex: none;
+      align-self: center;
       width: 1rem;
       height: 1rem;
-      margin-top: 0.2em;
-      border: 1px solid var(--c-borde);
-      border-radius: 0.25rem;
+      border-radius: 2px;
     }
 
-    .muestra--red { background: color-mix(in srgb, var(--c-atencion) 22%, var(--c-superficie)); }
-    .muestra--hosts { background: color-mix(in srgb, var(--c-primario) 24%, var(--c-superficie)); }
-    .muestra--broadcast { background: color-mix(in srgb, var(--c-error) 18%, var(--c-superficie)); }
-
-    @media (min-width: 40rem) {
-      .rango__leyenda {
-        grid-template-columns: repeat(3, 1fr);
-      }
+    .muestra--fin {
+      border: 1px solid var(--c-rojo-marca);
+      background: repeating-linear-gradient(135deg, #c8102e 0 3px, #fff 3px 6px);
     }
 
-    /* Datos técnicos con botón de copiar */
-    .dato__fila {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--e-2);
+    .muestra--carril {
+      background: var(--c-asfalto);
     }
 
-    .dato__fila .boton--icono {
-      flex: none;
-      width: 2.5rem;
-      min-height: 2.5rem;
+    .muestra--vos {
+      border-radius: var(--r-marca);
+      background: var(--c-marca);
     }
 
-    /* Los 32 bits: azul = red, verde = equipo */
+    /* ───────── Bits ───────── */
+
     .bits-fila {
       display: grid;
       gap: var(--e-1);
@@ -294,7 +400,6 @@
       display: flex;
       flex-wrap: wrap;
       gap: var(--e-2) var(--e-3);
-      font-family: var(--f-mono);
     }
 
     .bits__octeto {
@@ -307,34 +412,144 @@
       place-items: center;
       width: 1rem;
       height: 1.75rem;
-      border-radius: 0.25rem;
-      font-size: 0.85rem;
-      font-weight: 700;
+      border-radius: 2px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
     }
 
     .bit--red {
-      color: var(--c-primario);
-      background: color-mix(in srgb, var(--c-primario) 18%, var(--c-superficie));
+      color: var(--c-enlace);
+      background: var(--c-marca-fondo);
     }
 
     .bit--host {
-      color: var(--c-exito);
-      background: color-mix(in srgb, var(--c-exito) 16%, var(--c-superficie));
+      color: var(--c-texto);
+      background: var(--c-cara-2);
+      box-shadow: inset 0 0 0 1px var(--c-filete);
     }
 
-    /* ───────── Aprendé en un minuto ───────── */
+    /* ───────── Dividir y planificar ───────── */
 
-    /* 13rem: en PC entran las 5 tarjetas en una fila (el contenedor mide 70rem) */
-    .analogia {
-      --columna: 13rem;
+    #partes {
+      max-width: 28rem;
     }
 
-    .analogia .tarjeta__icono {
-      font-size: 1.75rem;
+    #cantidad {
+      max-width: 14rem;
     }
 
-    .sin-corte {
-      white-space: nowrap;
+    .plan__prefijo {
+      font-family: var(--f-titulo);
+      font-size: var(--t-5);
+      font-weight: 700;
+      color: var(--c-tinta);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* En el celular, cada parte de la red es un bloque: nada queda cortado de costado */
+    @media (max-width: 39.99rem) {
+      .tabla--apilable thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+
+      .tabla--apilable,
+      .tabla--apilable tbody,
+      .tabla--apilable tr,
+      .tabla--apilable td {
+        display: block;
+      }
+
+      .tabla--apilable tr {
+        padding: var(--e-3) var(--e-4);
+        border-bottom: 1px solid var(--c-filete);
+      }
+
+      .tabla--apilable tr:last-child {
+        border-bottom: 0;
+      }
+
+      .tabla--apilable td {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--e-3);
+        padding: var(--e-1) 0;
+        border: 0;
+        white-space: normal;
+      }
+
+      .tabla--apilable td::before {
+        content: attr(data-etiqueta);
+        font-weight: 500;
+        color: var(--c-suave);
+      }
+
+      .tabla--apilable .fila--destacada {
+        background: var(--c-marca-fondo);
+      }
+    }
+
+    /* ───────── Cómo funciona una red ───────── */
+
+    .guia__entrada {
+      max-width: 36ch;
+      font-size: var(--t-4);
+      line-height: 1.45;
+      color: var(--c-tinta);
+    }
+
+    .conceptos {
+      margin: var(--e-5) 0 0;
+      border-top: 1px solid var(--c-filete);
+    }
+
+    .concepto {
+      display: grid;
+      gap: var(--e-1) var(--e-5);
+      padding-block: var(--e-4);
+      border-bottom: 1px solid var(--c-filete);
+    }
+
+    .concepto dt {
+      font-weight: 600;
+      color: var(--c-tinta);
+    }
+
+    .concepto dd {
+      max-width: 60ch;
+      margin: 0;
+    }
+
+    /* ───────── Pantallas más grandes ───────── */
+
+    @media (min-width: 40rem) {
+      .concepto {
+        grid-template-columns: 13rem minmax(0, 1fr);
+      }
+    }
+
+    @media (min-width: 48rem) {
+      .datos--dos-columnas {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: var(--e-6);
+      }
+    }
+
+    @media (min-width: 64rem) {
+      .herramienta {
+        grid-template-columns: minmax(0, 25rem) minmax(0, 1fr);
+        gap: var(--e-7);
+      }
+
+      .herramienta > .calculadora {
+        position: sticky;
+        top: var(--e-4);
+      }
     }
   </style>
 </head>
@@ -343,139 +558,114 @@
 
   <header class="encabezado">
     <div class="contenedor encabezado__interior">
-      <a class="marca" href="../../">
-        <img src="../../assets/img/favicon.svg" alt="" width="28" height="28">
-        <span>Herramientas de red</span>
-      </a>
-      <button class="boton boton--fantasma boton--icono" type="button" data-accion="tema" aria-label="Cambiar el tema"></button>
+      <a class="marca" href="../../">Infraestructura escolar</a>
+      <div class="encabezado__lugar">
+        <span>Subredes</span>
+        <button class="boton boton--icono" type="button" data-accion="tema" aria-label="Cambiar el tema"></button>
+      </div>
     </div>
   </header>
 
   <main id="contenido">
     <section class="contenedor portada">
-      <span class="insignia">Calculadora de subredes</span>
       <h1>¿Qué red tengo y cuántos equipos entran?</h1>
-      <p class="bajada">
-        Escribí una dirección IP y te explicamos tu red en palabras simples:
-        qué direcciones podés usar, cuántos equipos entran y cómo dividirla.
-      </p>
+      <p class="bajada">Escribí la IP de un equipo y te explicamos la red en palabras simples: qué direcciones podés usar, cuáles no y cuántos equipos entran.</p>
     </section>
 
     <noscript>
       <div class="contenedor">
-        <p class="aviso aviso--atencion">Esta calculadora necesita JavaScript. Activalo en el navegador y recargá la página.</p>
+        <p class="panel">Esta calculadora necesita JavaScript. Activalo en el navegador y recargá la página.</p>
       </div>
     </noscript>
 
-    <!-- 1. Datos de entrada -->
-    <section class="contenedor" aria-labelledby="titulo-calculadora">
-      <h2 id="titulo-calculadora" class="visualmente-oculto">Datos de la red</h2>
-      <form id="calculadora" class="tarjeta calculadora" novalidate autocomplete="off">
+    <div class="contenedor herramienta">
+      <!-- Datos de entrada -->
+      <form id="calculadora" class="panel calculadora" novalidate autocomplete="off" aria-label="Datos de la red">
         <div class="campo">
-          <div class="fila etiqueta-con-ayuda">
-            <label for="ip">1. Escribí la dirección IP</label>
+          <div class="etiqueta-con-ayuda">
+            <label for="ip">Dirección IP</label>
             <button type="button" class="termino" data-termino="ip" aria-haspopup="dialog" aria-expanded="false">¿Qué es?</button>
           </div>
           <input id="ip" name="ip" class="entrada--grande" type="text" inputmode="decimal"
                  placeholder="192.168.1.10" spellcheck="false" autocapitalize="off" autocorrect="off"
                  aria-describedby="ayuda-ip error-ip">
-          <p id="ayuda-ip" class="ayuda">
-            Son cuatro números del 0 al 255 separados por puntos. Si ya sabés la máscara, podés escribirla junto:
-            <code>192.168.1.10/24</code>.
-          </p>
+          <p id="ayuda-ip" class="ayuda">Son cuatro números del 0 al 255 separados por puntos. Si sabés la máscara, podés escribirla junto: <span class="chip-ip">192.168.1.10/24</span>.</p>
           <p id="error-ip" class="campo__error" hidden></p>
         </div>
 
         <div class="campo">
-          <div class="fila etiqueta-con-ayuda">
-            <label for="tamanio">2. Elegí el tamaño de la red</label>
+          <div class="etiqueta-con-ayuda">
+            <label for="tamanio">Tamaño de la red</label>
             <button type="button" class="termino" data-termino="mascara" aria-haspopup="dialog" aria-expanded="false">¿Qué es la máscara?</button>
           </div>
           <div class="control-tamanio">
-            <button id="achicar" class="boton boton--secundario boton--icono" type="button" aria-label="Red más chica">−</button>
+            <button id="achicar" class="boton boton--secundario boton--icono" type="button" aria-label="Red más chica">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/></svg>
+            </button>
             <input id="tamanio" name="tamanio" type="range" min="0" max="32" step="1" value="8">
-            <button id="agrandar" class="boton boton--secundario boton--icono" type="button" aria-label="Red más grande">+</button>
+            <button id="agrandar" class="boton boton--secundario boton--icono" type="button" aria-label="Red más grande">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
           </div>
           <div class="tamanio-extremos" aria-hidden="true">
             <span>Más chica</span>
             <span>Más grande</span>
           </div>
-          <output id="tamanio-texto" class="tamanio-valor" for="tamanio" aria-live="polite">
-            <strong>/24 · 255.255.255.0</strong>
-            <span class="texto-suave">hasta 254 equipos</span>
+          <output id="tamanio-texto" class="lectura" for="tamanio">
+            <span class="lectura__prefijo">/24</span>
+            <span class="lectura__mascara">255.255.255.0</span>
+            <span class="lectura__equipos">hasta 254 equipos</span>
           </output>
         </div>
 
+        <!-- Ejemplos: en el celular, una fila que se desliza; en PC, una lista -->
         <div class="ejemplos">
-          <p class="etiqueta">¿No sabés qué poner? Probá con un ejemplo:</p>
-          <ul id="ejemplos" class="chips">
-            <li>
-              <button class="chip" type="button" data-ejemplo="192.168.0.1/24">
-                <span aria-hidden="true">🏠</span> Router de casa
-                <span class="chip__detalle">192.168.0.1/24</span>
-              </button>
-            </li>
-            <li>
-              <button class="chip" type="button" data-ejemplo="192.168.10.1/27">
-                <span aria-hidden="true">🖥️</span> Aula con 30 equipos
-                <span class="chip__detalle">192.168.10.1/27</span>
-              </button>
-            </li>
-            <li>
-              <button class="chip" type="button" data-ejemplo="10.0.0.1/8">
-                <span aria-hidden="true">🏢</span> Red muy grande
-                <span class="chip__detalle">10.0.0.1/8</span>
-              </button>
-            </li>
-            <li>
-              <button class="chip" type="button" data-ejemplo="10.0.0.1/30">
-                <span aria-hidden="true">🔗</span> Enlace entre dos routers
-                <span class="chip__detalle">10.0.0.1/30</span>
-              </button>
-            </li>
-            <li>
-              <button class="chip" type="button" data-ejemplo="8.8.8.8/32">
-                <span aria-hidden="true">🌐</span> Una IP de internet
-                <span class="chip__detalle">8.8.8.8/32</span>
-              </button>
-            </li>
+          <p class="etiqueta" id="titulo-ejemplos">Probá con un ejemplo</p>
+          <ul id="ejemplos" class="opciones" aria-labelledby="titulo-ejemplos">
+            <li><button class="opcion" type="button" data-ejemplo="192.168.0.1/24">Router de casa <span class="opcion__detalle">192.168.0.1/24</span></button></li>
+            <li><button class="opcion" type="button" data-ejemplo="192.168.10.1/27">Aula con 30 equipos <span class="opcion__detalle">192.168.10.1/27</span></button></li>
+            <li><button class="opcion" type="button" data-ejemplo="10.0.0.1/8">Red muy grande <span class="opcion__detalle">10.0.0.1/8</span></button></li>
+            <li><button class="opcion" type="button" data-ejemplo="10.0.0.1/30">Enlace entre dos routers <span class="opcion__detalle">10.0.0.1/30</span></button></li>
+            <li><button class="opcion" type="button" data-ejemplo="8.8.8.8/32">Una IP de internet <span class="opcion__detalle">8.8.8.8/32</span></button></li>
           </ul>
         </div>
       </form>
-    </section>
 
-    <!-- 2. Resultado: lo completa ui.js -->
-    <section id="resultado" class="contenedor seccion pila" aria-labelledby="titulo-resultado">
-      <div class="resultado-encabezado">
-        <h2 id="titulo-resultado">Tu red</h2>
-        <fieldset class="segmentado">
-          <legend class="visualmente-oculto">Nivel de detalle</legend>
-          <input type="radio" name="modo" id="modo-simple" value="simple" checked>
-          <label for="modo-simple">Simple</label>
-          <input type="radio" name="modo" id="modo-tecnico" value="tecnico">
-          <label for="modo-tecnico">Técnico</label>
-        </fieldset>
-      </div>
+      <!-- Resultado: lo completa ui.js -->
+      <section id="resultado" class="resultado" aria-labelledby="titulo-resultado">
+        <div class="resultado__cabecera">
+          <h2 id="titulo-resultado">Tu red</h2>
+          <fieldset class="segmentado">
+            <legend class="visualmente-oculto">Nivel de detalle</legend>
+            <input type="radio" name="modo" id="modo-simple" value="simple" checked>
+            <label for="modo-simple">Simple</label>
+            <input type="radio" name="modo" id="modo-tecnico" value="tecnico">
+            <label for="modo-tecnico">Técnico</label>
+          </fieldset>
+        </div>
 
-      <div id="resultado-vacio" class="resultado-vacio pila">
-        <span class="resultado-vacio__icono" aria-hidden="true">🧭</span>
-        <p>Escribí una dirección IP o tocá un ejemplo, y acá vas a ver tu red explicada.</p>
-      </div>
-
-      <div id="resultado-contenido" class="pila" hidden></div>
-
-      <!-- Resumen corto para lectores de pantalla -->
-      <p id="anuncio" class="visualmente-oculto" aria-live="polite"></p>
-    </section>
-
-    <!-- 3. Dividir la red: lo completa ui.js cuando hay una red válida -->
-    <section id="division" class="contenedor seccion" aria-labelledby="titulo-division" hidden>
-      <div class="tarjeta pila">
-        <h2 id="titulo-division">Dividí tu red en partes iguales</h2>
-        <p class="texto-suave">
-          Sirve para separar, por ejemplo, una red para cada aula o sector.
-          Cada parte funciona como una red independiente.
+        <p class="sello insignia insignia--prevencion" role="status">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="senal-fondo" d="M12 1.6 22.4 12 12 22.4 1.6 12Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 7.2v6.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1.3" fill="currentColor"/></svg>
+          Resultado anterior: corregí la IP para actualizarlo
         </p>
+
+        <div id="resultado-vacio" class="panel resultado-vacio" hidden>
+          <h3>Todavía no hay una red para mostrar</h3>
+          <p class="texto-suave">Escribí una IP en la calculadora o elegí uno de los ejemplos.</p>
+        </div>
+
+        <div id="resultado-contenido" class="pila" style="--espacio: var(--e-5)" hidden></div>
+
+        <!-- Resumen corto para lectores de pantalla -->
+        <p id="anuncio" class="visualmente-oculto" aria-live="polite"></p>
+      </section>
+    </div>
+
+    <!-- Dividir la red: aparece cuando hay una red válida -->
+    <section id="division" class="contenedor seccion bloque" aria-labelledby="titulo-division" hidden>
+      <h2 id="titulo-division">Dividí la red en partes iguales</h2>
+      <div class="pila">
+        <p class="prosa">Sirve para separar, por ejemplo, una red para cada aula o sector. Cada parte funciona como una red independiente.</p>
         <div class="campo">
           <label for="partes">¿En cuántas partes?</label>
           <select id="partes" name="partes"></select>
@@ -484,13 +674,13 @@
       </div>
     </section>
 
-    <!-- 4. Al revés: de la cantidad de equipos a la máscara -->
-    <section class="contenedor seccion" aria-labelledby="titulo-planificador">
-      <form id="planificador" class="tarjeta pila" novalidate>
-        <h2 id="titulo-planificador">¿Cuántos equipos querés conectar?</h2>
-        <p class="texto-suave">Te decimos qué tamaño de red necesitás, sin desperdiciar direcciones.</p>
+    <!-- Al revés: de la cantidad de equipos a la máscara -->
+    <section class="contenedor seccion bloque" aria-labelledby="titulo-planificador">
+      <h2 id="titulo-planificador">¿Cuántos equipos querés conectar?</h2>
+      <form id="planificador" class="pila" novalidate>
+        <p class="prosa">Te decimos qué tamaño de red necesitás, sin desperdiciar direcciones.</p>
         <div class="campo">
-          <label for="cantidad">Cantidad de equipos (compus, impresoras, celulares…)</label>
+          <label for="cantidad">Cantidad de equipos (compus, impresoras, celulares)</label>
           <input id="cantidad" name="cantidad" type="number" inputmode="numeric" min="1" step="1"
                  placeholder="Por ejemplo, 30" aria-describedby="error-cantidad">
           <p id="error-cantidad" class="campo__error" hidden></p>
@@ -499,63 +689,40 @@
       </form>
     </section>
 
-    <!-- 5. Explicación para quien nunca vio una red -->
-    <section class="contenedor seccion pila" aria-labelledby="titulo-aprender">
-      <h2 id="titulo-aprender">Aprendé en un minuto</h2>
-      <div class="grilla analogia">
-        <article class="tarjeta">
-          <span class="tarjeta__icono" aria-hidden="true">🏘️</span>
-          <h3>Una red es como un barrio</h3>
-          <p>
-            Cada equipo conectado (una compu, un celular, una impresora) es una casa,
-            y su <button type="button" class="termino" data-termino="ip" aria-haspopup="dialog" aria-expanded="false">dirección IP</button>
-            es la dirección de esa casa.
-          </p>
-        </article>
-        <article class="tarjeta">
-          <span class="tarjeta__icono" aria-hidden="true">✂️</span>
-          <h3>La máscara corta la dirección en dos</h3>
-          <p>
-            Una parte dice en qué barrio estás (la red) y la otra qué casa sos (el equipo).
-            Con una <button type="button" class="termino" data-termino="mascara" aria-haspopup="dialog" aria-expanded="false">máscara</button>
-            /24, los tres primeros números son el barrio y el último es la casa.
-          </p>
-        </article>
-        <article class="tarjeta">
-          <span class="tarjeta__icono" aria-hidden="true">🚫</span>
-          <h3>Hay dos direcciones que no se usan</h3>
-          <p>
-            La primera es el nombre del barrio (la
-            <button type="button" class="termino" data-termino="red" aria-haspopup="dialog" aria-expanded="false">dirección de red</button>)
-            y la última es un megáfono que les habla a todos a la vez (el
-            <button type="button" class="termino" data-termino="broadcast" aria-haspopup="dialog" aria-expanded="false">broadcast</button>).
-            Ninguna de las dos se le puede poner a un equipo.
-          </p>
-        </article>
-        <article class="tarjeta">
-          <span class="tarjeta__icono" aria-hidden="true">🚪</span>
-          <h3>Para salir del barrio, el router</h3>
-          <p>
-            Cuando un equipo quiere llegar a otra red o a internet, le pasa los datos al router:
-            es la <button type="button" class="termino" data-termino="puerta" aria-haspopup="dialog" aria-expanded="false">puerta de enlace</button>.
-          </p>
-        </article>
-        <article class="tarjeta">
-          <span class="tarjeta__icono" aria-hidden="true">🔒</span>
-          <h3>Privadas y públicas</h3>
-          <p>
-            Las que empiezan con <code>10.</code>, <code>172.16.</code> a <code>172.31.</code> o <code>192.168.</code>
-            son <span class="sin-corte"><button type="button" class="termino" data-termino="privada" aria-haspopup="dialog" aria-expanded="false">privadas</button>:</span>
-            solo existen dentro de tu red local. Las públicas son las que se ven desde internet.
-          </p>
-        </article>
+    <!-- Para quien nunca vio una red -->
+    <section class="contenedor seccion bloque" aria-labelledby="titulo-guia">
+      <h2 id="titulo-guia">Cómo funciona una red, en un minuto</h2>
+      <div>
+        <p class="guia__entrada">Una red es como un barrio: cada equipo conectado es una casa, y su dirección IP es la dirección de esa casa.</p>
+        <dl class="conceptos">
+          <div class="concepto">
+            <dt>La máscara</dt>
+            <dd>Corta la dirección en dos: una parte dice en qué barrio estás (la red) y la otra qué casa sos (el equipo). Con /24, los tres primeros números son el barrio y el último es la casa.</dd>
+          </div>
+          <div class="concepto">
+            <dt>El nombre de la red</dt>
+            <dd>Es la primera dirección del rango. Identifica a todo el barrio, así que no se le pone a ningún equipo.</dd>
+          </div>
+          <div class="concepto">
+            <dt>El aviso a todos</dt>
+            <dd>Es la última dirección, el <span class="sin-corte"><button type="button" class="termino" data-termino="broadcast" aria-haspopup="dialog" aria-expanded="false">broadcast</button>:</span> lo que se manda ahí les llega a todos los equipos a la vez. Tampoco se le pone a un equipo.</dd>
+          </div>
+          <div class="concepto">
+            <dt>La puerta de enlace</dt>
+            <dd>Es el router, la salida del barrio. Cuando un equipo quiere llegar a otra red o a internet, le pasa los datos a él.</dd>
+          </div>
+          <div class="concepto">
+            <dt>Privadas y públicas</dt>
+            <dd>Las que empiezan con <span class="chip-ip">10.</span>, de <span class="chip-ip">172.16.</span> a <span class="chip-ip">172.31.</span> o con <span class="chip-ip">192.168.</span> son privadas: solo existen dentro de tu red local. Las públicas son las que se ven desde internet.</dd>
+          </div>
+        </dl>
       </div>
     </section>
   </main>
 
   <footer class="pie">
     <div class="contenedor">
-      <p>Herramientas de redes y servidores · Código abierto con licencia MIT.</p>
+      <p>Infraestructura escolar. Código abierto con licencia MIT.</p>
     </div>
   </footer>
 </body>

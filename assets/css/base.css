@@ -7,7 +7,7 @@
  *
  * Tipografía: Barlow para texto e interfaz, Barlow Semi Condensed para
  * títulos y placas. Se sirven desde assets/fonts (licencia OFL).
- * Escala con base de 17 px y razón cercana a 1,25: 13, 15, 17, 21, 26 y 32 a 44 px.
+ * Escala con base de 17 px y saltos de 1,25 o más: 13, 15, 17, 22, 28 y 32 a 44 px.
  * Los datos van siempre con cifras tabulares, para que las IP se alineen.
  *
  * Mobile first: lo que está fuera de las media queries es para el celular.
@@ -96,7 +96,6 @@
   --c-info-fondo: #e7eef7;
 
   --c-foco: #0b4f9c;
-  --sombra-globo: 0 12px 32px rgb(0 0 0 / 0.18);
 
   /* Tipografía */
   --f-texto: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -104,8 +103,8 @@
   --t-1: 0.8125rem;   /* 13 px: referencias */
   --t-2: 0.9375rem;   /* 15 px: etiquetas, ayudas */
   --t-3: 1.0625rem;   /* 17 px: texto */
-  --t-4: 1.3125rem;   /* 21 px: subtítulos, datos */
-  --t-5: 1.625rem;    /* 26 px: títulos de sección */
+  --t-4: 1.375rem;    /* 22 px: subtítulos, datos */
+  --t-5: 1.75rem;     /* 28 px: títulos de sección */
   --t-6: clamp(2rem, 1.55rem + 2.2vw, 2.75rem);     /* 32 a 44 px: título de página */
   --t-cifra: clamp(2.5rem, 2rem + 2.5vw, 3.25rem);  /* la cifra principal de la placa */
 
@@ -157,7 +156,6 @@
     --c-azul-marca: #2f74c9;
     --c-info-fondo: #182639;
     --c-foco: #8db8f0;
-    --sombra-globo: 0 12px 32px rgb(0 0 0 / 0.55);
   }
 }
 
@@ -186,7 +184,6 @@
   --c-azul-marca: #2f74c9;
   --c-info-fondo: #182639;
   --c-foco: #8db8f0;
-  --sombra-globo: 0 12px 32px rgb(0 0 0 / 0.55);
 }
 
 /* ───────────── Base ───────────── */
@@ -301,6 +298,18 @@ code, kbd, samp {
   border: 1px solid var(--c-filete);
   border-radius: var(--r-marca);
   background: var(--c-cara-2);
+}
+
+/* Una IP de ejemplo dentro del texto: el mismo chip, pero en la letra de los datos */
+.chip-ip {
+  padding: 0.05em 0.35em;
+  border: 1px solid var(--c-filete);
+  border-radius: var(--r-marca);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-tinta);
+  background: var(--c-cara-2);
+  white-space: nowrap;
 }
 
 /* La selección se marca en amarillo, como un resaltador de ruta */
@@ -464,6 +473,7 @@ code, kbd, samp {
 /* Bloque con el título colgado en una columna de margen (en pantallas anchas) */
 .bloque {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);  /* que una tabla ancha no estire la página */
   gap: var(--e-3) var(--e-6);
 }
 
@@ -804,7 +814,7 @@ input[type="range"]::-moz-range-thumb {
   position: relative;
   display: inline-flex;
   margin: 0;
-  padding: 2px;
+  padding: 3px;
   min-inline-size: 0;
   border: 2px solid var(--c-filete-fuerte);
   border-radius: var(--r-control);
@@ -990,11 +1000,6 @@ input[type="range"]::-moz-range-thumb {
   border-radius: var(--r-placa);
   color: var(--c-texto);
   background: var(--c-cara);
-  box-shadow: var(--sombra-globo);
-}
-
-.globo::backdrop {
-  background: rgb(0 0 0 / 0.4);
 }
 
 .globo h3 {
