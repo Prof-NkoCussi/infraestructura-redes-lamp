@@ -88,4 +88,4 @@ tests/
 ## Licencia
 
 [MIT](LICENSE) © Prof. Nicolás A. Cussi<br>
-*FULL STACK DEVELOPER • DATA SCIENCE • AI*
+*Full Stack Developer • Data Science • AI*
