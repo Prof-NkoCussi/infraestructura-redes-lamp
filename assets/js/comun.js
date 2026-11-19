@@ -1,7 +1,8 @@
 /**
  * Utilidades compartidas por todas las páginas.
  *
- * Al importarlo desde cualquier ui.js ya deja andando lo común de la página:
+ * Además de las piezas para armar pantallas (crear, icono, senal, aviso…),
+ * al importarlo desde cualquier ui.js ya deja andando lo común de la página:
  *  - Tema claro/oscuro: botones con data-accion="tema".
  *  - Copiar al portapapeles: botones con data-copiar="texto" o data-copiar-de="#id".
  *  - Glosario: <button class="termino" data-termino="clave">palabra</button>
@@ -76,12 +77,22 @@ const ICONOS = {
   copiar: 'M9 9h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V9Zm-4 6H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1',
   check: 'M20 6 9 17l-5-5',
   info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm0-6v-4m0-4h.01',
+  menos: 'M5 12h14',
+  mas: 'M12 5v14M5 12h14',
 };
+
+/** Elemento SVG con sus atributos (los números se pasan a texto). */
+function crearSvg(etiqueta, atributos = {}) {
+  const elemento = document.createElementNS(SVG, etiqueta);
+  for (const [nombre, valor] of Object.entries(atributos)) {
+    elemento.setAttribute(nombre, String(valor));
+  }
+  return elemento;
+}
 
 /** Ícono de trazo (24×24) que toma el color del texto. Es decorativo: va con aria-hidden. */
 export function icono(nombre, tamanio = 22) {
-  const svg = document.createElementNS(SVG, 'svg');
-  const atributos = {
+  const svg = crearSvg('svg', {
     viewBox: '0 0 24 24',
     width: tamanio,
     height: tamanio,
@@ -92,14 +103,55 @@ export function icono(nombre, tamanio = 22) {
     'stroke-linejoin': 'round',
     'aria-hidden': 'true',
     focusable: 'false',
-  };
-  for (const [nombreAtributo, valor] of Object.entries(atributos)) {
-    svg.setAttribute(nombreAtributo, String(valor));
-  }
-  const trazo = document.createElementNS(SVG, 'path');
-  trazo.setAttribute('d', ICONOS[nombre] ?? ICONOS.info);
-  svg.append(trazo);
+  });
+  svg.append(crearSvg('path', { d: ICONOS[nombre] ?? ICONOS.info }));
   return svg;
+}
+
+/*
+ * Señales de los avisos, dibujadas como las de la ruta.
+ * El fondo toma --senal-fondo y el símbolo currentColor (los define base.css).
+ */
+const SENALES = {
+  // Prevención: rombo amarillo con signo de exclamación
+  prevencion: [
+    ['path', { class: 'senal-fondo', d: 'M12 1.6 22.4 12 12 22.4 1.6 12Z', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linejoin': 'round' }],
+    ['path', { d: 'M12 7.2v6.2', fill: 'none', stroke: 'currentColor', 'stroke-width': 2.2, 'stroke-linecap': 'round' }],
+    ['circle', { cx: 12, cy: 16.6, r: 1.3, fill: 'currentColor' }],
+  ],
+  // Prohibición: aro rojo con barra
+  prohibido: [
+    ['circle', { class: 'senal-fondo', cx: 12, cy: 12, r: 9.6, stroke: 'currentColor', 'stroke-width': 3 }],
+    ['path', { d: 'm5.4 5.4 13.2 13.2', fill: 'none', stroke: 'currentColor', 'stroke-width': 3 }],
+  ],
+  // Información: cuadrado azul con la letra i
+  info: [
+    ['rect', { class: 'senal-fondo', x: 1.5, y: 1.5, width: 21, height: 21, rx: 3 }],
+    ['path', { d: 'M12 10.6v7', fill: 'none', stroke: 'currentColor', 'stroke-width': 2.4, 'stroke-linecap': 'round' }],
+    ['circle', { cx: 12, cy: 6.9, r: 1.5, fill: 'currentColor' }],
+  ],
+};
+
+/** Señal decorativa: 'prevencion', 'prohibido' o 'info'. */
+export function senal(tipo, clase = 'aviso__senal') {
+  const svg = crearSvg('svg', { class: clase, viewBox: '0 0 24 24', 'aria-hidden': 'true', focusable: 'false' });
+  for (const [etiqueta, atributos] of SENALES[tipo] ?? SENALES.info) {
+    svg.append(crearSvg(etiqueta, atributos));
+  }
+  return svg;
+}
+
+/**
+ * Aviso con su señal, para que todas las herramientas avisen igual.
+ *   aviso('prevencion', 'Ojo: es el nombre de la red', 'No se le puede poner a un equipo.')
+ * `texto` puede ser un string, un nodo o una lista de ambos.
+ */
+export function aviso(tipo, titulo, texto) {
+  return crear('div', { class: `aviso aviso--${tipo}` },
+    senal(tipo),
+    crear('div', {},
+      crear('p', { class: 'aviso__titulo' }, titulo),
+      texto && crear('p', {}, texto)));
 }
 
 /* ───────────── Utilidades ───────────── */
